@@ -1,9 +1,7 @@
-import pandas as pd
+ import pandas as pd
 from rapidfuzz import process, fuzz
 import streamlit as st
 import requests
-import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
 
 st.set_page_config(page_title="Endangered Species Checker", layout="centered")
 
@@ -61,39 +59,6 @@ def get_gbif_occurrences(scientific_name, max_records=1000):
 
     return coordinates
 
-# Plot map focused on Central and Northern Europe
-def plot_distribution_map(coordinates, species_name):
-    fig, ax = plt.subplots(figsize=(12, 8))  # Rectangular figure
-
-    m = Basemap(
-        projection='lcc',
-        lat_1=50,
-        lat_2=70,
-        lat_0=60,
-        lon_0=20,
-        llcrnrlat=45,
-        urcrnrlat=72,
-        llcrnrlon=0,
-        urcrnrlon=40,
-        resolution='i',
-        ax=ax
-    )
-
-    m.drawcoastlines()
-    m.drawcountries()
-    m.drawmapboundary(fill_color='lightblue')
-    m.fillcontinents(color='lightgreen', lake_color='lightblue')
-    m.drawrivers(color='blue')
-
-    if coordinates:
-        lats, lons = zip(*coordinates)
-        x, y = m(lons, lats)
-        m.scatter(x, y, s=30, c='red', marker='o', alpha=0.7, edgecolors='k', linewidth=0.5)
-
-    ax.set_title(f"Distribution of {species_name}", fontsize=16)
-    plt.tight_layout()
-    st.pyplot(fig)
-
 # Main analyze button logic
 if st.button("🔍 Analyze"):
     if not species_text.strip():
@@ -140,20 +105,10 @@ if st.button("🔍 Analyze"):
             matched_df = pd.DataFrame([row for _, _, _, row in found]).drop_duplicates(subset=['ScientificName'])
             st.dataframe(matched_df)
 
-            # Show occurrence maps for matched species
+            # List matched species names
             for inp, matched, score, row in found:
                 scientific_name = row['ScientificName']
                 st.markdown(f"**Input:** `{inp}` → **Matched:** `{matched}` (score {score})")
-                coordinates = get_gbif_occurrences(scientific_name, max_records=1000)  # Fetch up to 1000 records
-                if coordinates:
-                    plot_distribution_map(coordinates, scientific_name)
-                    gbif_link = f"https://www.gbif.org/species/search?q={scientific_name.replace(' ', '%20')}"
-                    st.markdown(
-                        f"*Map result is restricted to 1000 occurrence points for performance reasons. "
-                        f"For a more complete inventory, please visit [GBIF]({gbif_link}).*"
-                    )
-                else:
-                    st.info(f"No distribution map available for {scientific_name}.")
 
         else:
             st.info("No endangered species found.")
