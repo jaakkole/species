@@ -1,4 +1,4 @@
- import pandas as pd
+import pandas as pd
 from rapidfuzz import process, fuzz
 import streamlit as st
 import requests
